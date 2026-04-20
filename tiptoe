@@ -1,0 +1,238 @@
+import random
+
+def print_board(board):
+    """Отображение игрового поля"""
+    print("\n")
+    for i in range(3):
+        row = ""
+        for j in range(3):
+            cell = board[i][j] if board[i][j] != " " else str(i * 3 + j + 1)
+            row += f" {cell} "
+            if j < 2:
+                row += "|"
+        print(row)
+        if i < 2:
+            print("-" * 11)
+    print("\n")
+
+def check_winner(board, player):
+    """Проверка победителя"""
+    # Проверка строк и столбцов
+    for i in range(3):
+        if all(board[i][j] == player for j in range(3)):
+            return True
+        if all(board[j][i] == player for j in range(3)):
+            return True
+    
+    # Проверка диагоналей
+    if all(board[i][i] == player for i in range(3)):
+        return True
+    if all(board[i][2-i] == player for i in range(3)):
+        return True
+    
+    return False
+
+def is_board_full(board):
+    """Проверка на ничью"""
+    return all(board[i][j] != " " for i in range(3) for j in range(3))
+
+def get_empty_cells(board):
+    """Получение списка пустых клеток"""
+    return [(i, j) for i in range(3) for j in range(3) if board[i][j] == " "]
+
+def minimax(board, depth, is_maximizing, alpha, beta):
+    """Алгоритм Minimax с альфа-бета отсечением"""
+    
+    # Проверка терминальных состояний
+    if check_winner(board, "O"):  # ИИ победил
+        return 10 - depth
+    if check_winner(board, "X"):  # Игрок победил
+        return depth - 10
+    if is_board_full(board):      # Ничья
+        return 0
+    
+    if is_maximizing:
+        max_eval = float('-inf')
+        for (i, j) in get_empty_cells(board):
+            board[i][j] = "O"
+            eval_score = minimax(board, depth + 1, False, alpha, beta)
+            board[i][j] = " "
+            max_eval = max(max_eval, eval_score)
+            alpha = max(alpha, eval_score)
+            if beta <= alpha:
+                break
+        return max_eval
+    else:
+        min_eval = float('inf')
+        for (i, j) in get_empty_cells(board):
+            board[i][j] = "X"
+            eval_score = minimax(board, depth + 1, True, alpha, beta)
+            board[i][j] = " "
+            min_eval = min(min_eval, eval_score)
+            beta = min(beta, eval_score)
+            if beta <= alpha:
+                break
+        return min_eval
+
+def ai_move(board, difficulty="hard"):
+    """Ход ИИ"""
+    empty_cells = get_empty_cells(board)
+    
+    if not empty_cells:
+        return None
+    
+    if difficulty == "easy":
+        # Лёгкий: случайный ход
+        return random.choice(empty_cells)
+    
+    elif difficulty == "medium":
+        # Средний: 50% умный ход, 50% случайный
+        if random.random() < 0.5:
+            return random.choice(empty_cells)
+    
+    # Сложный: всегда лучший ход (Minimax)
+    best_score = float('-inf')
+    best_move = None
+    
+    for (i, j) in empty_cells:
+        board[i][j] = "O"
+        score = minimax(board, 0, False, float('-inf'), float('inf'))
+        board[i][j] = " "
+        
+        if score > best_score:
+            best_score = score
+            best_move = (i, j)
+    
+    return best_move
+
+def player_move(board):
+    """Ход игрока"""
+    while True:
+        try:
+            move = input("Ваш ход (1-9): ")
+            move = int(move) - 1
+            
+            if move < 0 or move > 8:
+                print("❌ Введите число от 1 до 9!")
+                continue
+            
+            row, col = move // 3, move % 3
+            
+            if board[row][col] != " ":
+                print("❌ Эта клетка уже занята!")
+                continue
+            
+            return row, col
+            
+        except ValueError:
+            print("❌ Введите корректное число!")
+
+def choose_difficulty():
+    """Выбор сложности"""
+    print("\n🎮 Выберите уровень сложности:")
+    print("1. Лёгкий (случайные ходы)")
+    print("2. Средний (иногда ошибается)")
+    print("3. Сложный (непобедимый)")
+    
+    while True:
+        choice = input("\nВаш выбор (1-3): ")
+        if choice == "1":
+            return "easy"
+        elif choice == "2":
+            return "medium"
+        elif choice == "3":
+            return "hard"
+        else:
+            print("❌ Введите 1, 2 или 3!")
+
+def choose_first_player():
+    """Выбор кто ходит первым"""
+    print("\n🎯 Кто ходит первым?")
+    print("1. Вы (X)")
+    print("2. Компьютер (O)")
+    print("3. Случайный выбор")
+    
+    while True:
+        choice = input("\nВаш выбор (1-3): ")
+        if choice == "1":
+            return "player"
+        elif choice == "2":
+            return "ai"
+        elif choice == "3":
+            return random.choice(["player", "ai"])
+        else:
+            print("❌ Введите 1, 2 или 3!")
+
+def play_game():
+    """Основной игровой цикл"""
+    print("=" * 40)
+    print("   🎮 КРЕСТИКИ-НОЛИКИ против ИИ 🎮")
+    print("=" * 40)
+    print("\nВы играете за X, компьютер за O")
+    print("Для хода введите номер клетки (1-9):")
+    print("\n 1 | 2 | 3 ")
+    print("-" * 11)
+    print(" 4 | 5 | 6 ")
+    print("-" * 11)
+    print(" 7 | 8 | 9 ")
+    
+    difficulty = choose_difficulty()
+    first_player = choose_first_player()
+    
+    # Инициализация поля
+    board = [[" " for _ in range(3)] for _ in range(3)]
+    current_player = first_player
+    
+    difficulty_names = {"easy": "Лёгкий", "medium": "Средний", "hard": "Сложный"}
+    print(f"\n✅ Сложность: {difficulty_names[difficulty]}")
+    print(f"✅ Первый ход: {'Вы' if first_player == 'player' else 'Компьютер'}")
+    
+    print_board(board)
+    
+    # Игровой цикл
+    while True:
+        if current_player == "player":
+            print("🎯 Ваш ход!")
+            row, col = player_move(board)
+            board[row][col] = "X"
+            
+            if check_winner(board, "X"):
+                print_board(board)
+                print("🎉🎉🎉 ПОЗДРАВЛЯЕМ! ВЫ ПОБЕДИЛИ! 🎉🎉🎉")
+                break
+                
+        else:
+            print("🤖 Компьютер думает...")
+            move = ai_move(board, difficulty)
+            if move:
+                board[move[0]][move[1]] = "O"
+                print(f"🤖 Компьютер походил на клетку {move[0] * 3 + move[1] + 1}")
+            
+            if check_winner(board, "O"):
+                print_board(board)
+                print("😔 Компьютер победил! Попробуйте ещё раз!")
+                break
+        
+        print_board(board)
+        
+        if is_board_full(board):
+            print("🤝 Ничья! Отличная игра!")
+            break
+        
+        # Смена игрока
+        current_player = "ai" if current_player == "player" else "player"
+
+def main():
+    """Главная функция"""
+    while True:
+        play_game()
+        
+        print("\n" + "=" * 40)
+        play_again = input("🔄 Хотите сыграть ещё? (да/нет): ").lower()
+        
+        if play_again not in ["да", "д", "yes", "y"]:
+            print("\n👋 Спасибо за игру! До встречи!")
+            break
+
+if __name__ == "__main__":
+    main()
