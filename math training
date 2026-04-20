@@ -1,0 +1,166 @@
+import random
+
+
+def get_range(level):
+    """Возвращает диапазон чисел в зависимости от уровня сложности"""
+    ranges = {
+        1: (1, 9),        # однозначные
+        2: (10, 99),      # двухзначные
+        3: (100, 999),    # трехзначные
+        4: (1000, 9999)   # четырехзначные
+    }
+    return ranges[level]
+
+
+def generate_addition(min_val, max_val):
+    """Генерирует задачу на сложение"""
+    a = random.randint(min_val, max_val)
+    b = random.randint(min_val, max_val)
+    return a, b, a + b, f"{a} + {b}"
+
+
+def generate_subtraction(min_val, max_val):
+    """Генерирует задачу на вычитание (результат всегда > 0)"""
+    a = random.randint(min_val, max_val)
+    b = random.randint(min_val, max_val)
+    # Гарантируем, что результат будет положительным
+    if a < b:
+        a, b = b, a
+    # Если числа равны, увеличиваем первое
+    if a == b:
+        a += random.randint(1, min_val)
+    return a, b, a - b, f"{a} - {b}"
+
+
+def generate_multiplication(min_val, max_val):
+    """Генерирует задачу на умножение"""
+    a = random.randint(min_val, max_val)
+    b = random.randint(min_val, max_val)
+    return a, b, a * b, f"{a} × {b}"
+
+
+def generate_division(min_val, max_val):
+    """Генерирует задачу на деление (результат всегда целое число > 0)"""
+    # Сначала генерируем результат и делитель, потом вычисляем делимое
+    result = random.randint(min_val, max_val)
+    b = random.randint(min_val, max_val)
+    a = result * b  # делимое = результат × делитель
+    return a, b, result, f"{a} ÷ {b}"
+
+
+def choose_operation():
+    """Выбор операции"""
+    print("\n" + "=" * 50)
+    print("ТРЕНАЖЕР УСТНОГО СЧЕТА")
+    print("=" * 50)
+    print("\nВыберите операцию:")
+    print("1. Сложение (+)")
+    print("2. Вычитание (-)")
+    print("3. Умножение (×)")
+    print("4. Деление (÷)")
+    print("0. Выход")
+    
+    while True:
+        try:
+            choice = int(input("\nВаш выбор (0-4): "))
+            if 0 <= choice <= 4:
+                return choice
+            print("Пожалуйста, введите число от 0 до 4")
+        except ValueError:
+            print("Пожалуйста, введите корректное число")
+
+
+def choose_level():
+    """Выбор уровня сложности"""
+    print("\nВыберите уровень сложности:")
+    print("1. Однозначные числа (1-9)")
+    print("2. Двухзначные числа (10-99)")
+    print("3. Трехзначные числа (100-999)")
+    print("4. Четырехзначные числа (1000-9999)")
+    
+    while True:
+        try:
+            choice = int(input("\nВаш выбор (1-4): "))
+            if 1 <= choice <= 4:
+                return choice
+            print("Пожалуйста, введите число от 1 до 4")
+        except ValueError:
+            print("Пожалуйста, введите корректное число")
+
+
+def run_training(operation, level):
+    """Запуск тренировки"""
+    operations = {
+        1: ("Сложение", generate_addition),
+        2: ("Вычитание", generate_subtraction),
+        3: ("Умножение", generate_multiplication),
+        4: ("Деление", generate_division)
+    }
+    
+    levels = {
+        1: "однозначные",
+        2: "двухзначные",
+        3: "трехзначные",
+        4: "четырехзначные"
+    }
+    
+    op_name, generator = operations[operation]
+    min_val, max_val = get_range(level)
+    
+    print(f"\n{'─' * 50}")
+    print(f"Режим: {op_name} | Числа: {levels[level]}")
+    print("Введите 'q' для возврата в меню")
+    print(f"{'─' * 50}")
+    
+    correct_count = 0
+    total_count = 0
+    
+    while True:
+        # Генерируем задачу
+        a, b, correct_answer, expression = generator(min_val, max_val)
+        
+        print(f"\n🧮 Задача: {expression} = ?")
+        
+        user_input = input("Ваш ответ: ").strip()
+        
+        if user_input.lower() == 'q':
+            if total_count > 0:
+                percentage = (correct_count / total_count) * 100
+                print(f"\n📊 Статистика сессии:")
+                print(f"   Правильных ответов: {correct_count} из {total_count}")
+                print(f"   Процент успеха: {percentage:.1f}%")
+            break
+        
+        try:
+            user_answer = int(user_input)
+            total_count += 1
+            
+            if user_answer == correct_answer:
+                print("✅ Верно!")
+                correct_count += 1
+            else:
+                print(f"❌ Неверно! Правильный ответ: {correct_answer}")
+                
+        except ValueError:
+            print("⚠️ Пожалуйста, введите целое число или 'q' для выхода")
+
+
+def main():
+    """Главная функция программы"""
+    print("\n" + "🔢 " * 10)
+    print("  Добро пожаловать в тренажер устного счета!")
+    print("🔢 " * 10)
+    
+    while True:
+        operation = choose_operation()
+        
+        if operation == 0:
+            print("\n👋 Спасибо за тренировку! До встречи!")
+            break
+        
+        level = choose_level()
+        run_training(operation, level)
+
+
+if __name__ == "__main__":
+    main()
